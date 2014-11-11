@@ -45,7 +45,7 @@ func NewSharedWriterBarrier(written *Cursor, capacity uint64) *SharedWriterBarri
 		shift:     uint8(math.Log2(float64(capacity))),
 	}
 }
-func prepareCommitBuffer(capacity uint64) []int32 {
+func prepareCommitBuffer(capacity uint64) []uint32 {
 	buffer := make([]uint32, capacity)
 	for i := range buffer {
 		buffer[i] = uint32(InitialSequenceValue)
@@ -53,7 +53,7 @@ func prepareCommitBuffer(capacity uint64) []int32 {
 	return buffer
 }
 
-func (b *SharedWriterBarrier) Read(lower uint64) int64 {
+func (b *SharedWriterBarrier) Read(lower uint64) uint64 {
 	shift, mask := b.shift, b.mask
 	upper := b.written.Load()
 

@@ -1,7 +1,7 @@
 package disruptor
 
 type Builder interface {
-	AddConsumerGroup() Builder
+	AddConsumerGroup(...Consumer) Builder
 	Build() Disruptor
 }
 
