@@ -73,21 +73,21 @@ func (b builder) buildReaders(consumerIndex, cursorIndex int, written *Cursor, u
 	}
 }
 
-func NewSharedBuilder(capacity uint64) Builder {
-	return sharedBuilder{
+func NewSharedBuilder(capacity uint64) SharedBuilder {
+	return SharedBuilder{
 		capacity: capacity,
 		groups:   [][]Consumer{},
 		cursors:  []*Cursor{NewCursor()},
 	}
 }
 
-type sharedBuilder struct {
+type SharedBuilder struct {
 	capacity uint64
 	groups   [][]Consumer
 	cursors  []*Cursor // backing array keeps cursors (with padding) in contiguous memory
 }
 
-func (b sharedBuilder) AddConsumerGroup(consumers ...Consumer) Builder {
+func (b SharedBuilder) AddConsumerGroup(consumers ...Consumer) SharedBuilder {
 	if len(consumers) == 0 {
 		return b
 	}
@@ -103,7 +103,7 @@ func (b sharedBuilder) AddConsumerGroup(consumers ...Consumer) Builder {
 	return b
 }
 
-func (s sharedBuilder) Build() Disruptor {
+func (s SharedBuilder) Build() SharedDisruptor {
 	allReaders := []*Reader{}
 	written := s.cursors[0]
 	writerBarrier := NewSharedWriterBarrier(written, s.capacity)
@@ -120,10 +120,10 @@ func (s sharedBuilder) Build() Disruptor {
 	}
 
 	writer := NewSharedWriter(writerBarrier, upstream)
-	return Disruptor{writer: writer, readers: allReaders}
+	return SharedDisruptor{writer: writer, readers: allReaders}
 }
 
-func (s sharedBuilder) buildReaders(consumerIndex, cursorIndex int, written *Cursor, upstream Barrier) ([]*Reader, Barrier) {
+func (s SharedBuilder) buildReaders(consumerIndex, cursorIndex int, written *Cursor, upstream Barrier) ([]*Reader, Barrier) {
 	barrierCursors := []*Cursor{}
 	readers := []*Reader{}
 

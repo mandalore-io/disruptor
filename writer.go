@@ -4,7 +4,7 @@ import (
 	"sync/atomic"
 )
 
-type writer struct {
+type Writer struct {
 	written  *Cursor
 	upstream Barrier
 	capacity uint64
@@ -15,7 +15,7 @@ type writer struct {
 func NewWriter(written *Cursor, upstream Barrier, capacity uint64) Writer {
 	assertPowerOfTwo(capacity)
 
-	return &writer{
+	return Writer{
 		upstream: upstream,
 		written:  written,
 		capacity: capacity,
@@ -31,7 +31,7 @@ func assertPowerOfTwo(value uint64) {
 	}
 }
 
-func (w *writer) Reserve(count uint64) uint64 {
+func (w *Writer) Reserve(count uint64) uint64 {
 	w.previous += count
 	for w.previous-w.capacity > w.gate {
 		w.gate = w.upstream.Read(0)
@@ -39,17 +39,17 @@ func (w *writer) Reserve(count uint64) uint64 {
 	return w.previous
 }
 
-func (w *writer) Await(next uint64) {
+func (w *Writer) Await(next uint64) {
 	for next-w.capacity > w.gate {
 		w.gate = w.upstream.Read(0)
 	}
 }
 
-func (w *writer) Commit(lower, upper uint64) {
+func (w *Writer) Commit(lower, upper uint64) {
 	w.written.sequence = upper
 }
 
-type sharedWriter struct {
+type SharedWriter struct {
 	written   *Cursor
 	upstream  Barrier
 	capacity  uint64
@@ -59,8 +59,8 @@ type sharedWriter struct {
 	committed []uint32
 }
 
-func NewSharedWriter(write *SharedWriterBarrier, upstream Barrier) Writer {
-	return &sharedWriter{
+func NewSharedWriter(write *SharedWriterBarrier, upstream Barrier) SharedWriter {
+	return SharedWriter{
 		written:   write.written,
 		upstream:  upstream,
 		capacity:  write.capacity,
@@ -71,7 +71,7 @@ func NewSharedWriter(write *SharedWriterBarrier, upstream Barrier) Writer {
 	}
 }
 
-func (w *sharedWriter) Reserve(count uint64) uint64 {
+func (w *SharedWriter) Reserve(count uint64) uint64 {
 	for {
 		previous := w.written.Load()
 		upper := previous + count
@@ -86,7 +86,7 @@ func (w *sharedWriter) Reserve(count uint64) uint64 {
 	}
 }
 
-func (w *sharedWriter) Commit(lower, upper uint64) {
+func (w *SharedWriter) Commit(lower, upper uint64) {
 	if lower == upper {
 		w.committed[upper&w.mask] = uint32(upper >> w.shift)
 	} else {

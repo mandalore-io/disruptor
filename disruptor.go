@@ -16,11 +16,11 @@ type Consumer interface {
 	Consume(lower, upper uint64)
 }
 
-type Writer interface {
-	Reserve(uint64) uint64
-	// Await(uint64)
-	Commit(uint64, uint64)
-}
+// type Writer interface {
+// 	Reserve(uint64) uint64
+// 	// Await(uint64)
+// 	Commit(uint64, uint64)
+// }
 
 // Implementation
 
@@ -40,6 +40,27 @@ func (d Disruptor) Start() {
 }
 
 func (d Disruptor) Stop() {
+	for _, item := range d.readers {
+		item.Stop()
+	}
+}
+
+type SharedDisruptor struct {
+	writer  SharedWriter
+	readers []*Reader
+}
+
+func (d SharedDisruptor) Writer() SharedWriter {
+	return d.writer
+}
+
+func (d SharedDisruptor) Start() {
+	for _, item := range d.readers {
+		item.Start()
+	}
+}
+
+func (d SharedDisruptor) Stop() {
 	for _, item := range d.readers {
 		item.Stop()
 	}
