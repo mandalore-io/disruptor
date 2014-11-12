@@ -1,19 +1,19 @@
 package disruptor
 
 const (
-	MaxSequenceValue     uint64 = (1 << 64) - 1
-	InitialSequenceValue uint64 = 0
-	cpuCacheLinePadding         = 7
+	cpuCacheLinePadding        = 7
+	InitialSequenceValue int64 = 0
+	MaxSequenceValue     int64 = (1 << 63) - 1
 )
 
 // Interfaces
 
 type Barrier interface {
-	Read(uint64) uint64
+	Read(int64) int64
 }
 
 type Consumer interface {
-	Consume(lower, upper uint64)
+	Consume(lower, upper int64)
 }
 
 // type Writer interface {
@@ -67,22 +67,22 @@ func (d SharedDisruptor) Stop() {
 }
 
 type Cursor struct {
-	sequence uint64
-	padding  [cpuCacheLinePadding]uint64
+	sequence int64
+	padding  [cpuCacheLinePadding]int64
 }
 
 func NewCursor() *Cursor {
 	return &Cursor{sequence: InitialSequenceValue}
 }
 
-func (c *Cursor) Store(sequence uint64) {
+func (c *Cursor) Store(sequence int64) {
 	c.sequence = sequence
 }
 
-func (c *Cursor) Load() uint64 {
+func (c *Cursor) Load() int64 {
 	return c.sequence
 }
 
-func (c *Cursor) Read(noop uint64) uint64 {
+func (c *Cursor) Read(noop int64) int64 {
 	return c.sequence
 }

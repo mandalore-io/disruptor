@@ -5,7 +5,7 @@ type Builder interface {
 	Build() Disruptor
 }
 
-func NewBuilder(capacity uint64) Builder {
+func NewBuilder(capacity int64) Builder {
 	return builder{
 		capacity: capacity,
 		groups:   [][]Consumer{},
@@ -14,7 +14,7 @@ func NewBuilder(capacity uint64) Builder {
 }
 
 type builder struct {
-	capacity uint64
+	capacity int64
 	groups   [][]Consumer
 	cursors  []*Cursor // backing array keeps cursors (with padding) in contiguous memory
 }
@@ -73,7 +73,7 @@ func (b builder) buildReaders(consumerIndex, cursorIndex int, written *Cursor, u
 	}
 }
 
-func NewSharedBuilder(capacity uint64) SharedBuilder {
+func NewSharedBuilder(capacity int64) SharedBuilder {
 	return SharedBuilder{
 		capacity: capacity,
 		groups:   [][]Consumer{},
@@ -82,7 +82,7 @@ func NewSharedBuilder(capacity uint64) SharedBuilder {
 }
 
 type SharedBuilder struct {
-	capacity uint64
+	capacity int64
 	groups   [][]Consumer
 	cursors  []*Cursor // backing array keeps cursors (with padding) in contiguous memory
 }

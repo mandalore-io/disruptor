@@ -14,7 +14,7 @@ func NewCompositeBarrier(upstream ...*Cursor) CompositeBarrier {
 	return CompositeBarrier(cursors)
 }
 
-func (b CompositeBarrier) Read(noop uint64) uint64 {
+func (b CompositeBarrier) Read(noop int64) int64 {
 	minimum := MaxSequenceValue
 	for _, item := range b {
 		sequence := item.Load()
@@ -28,13 +28,13 @@ func (b CompositeBarrier) Read(noop uint64) uint64 {
 
 type SharedWriterBarrier struct {
 	written   *Cursor
-	committed []uint32
-	capacity  uint64
-	mask      uint64
+	committed []int32
+	capacity  int64
+	mask      int64
 	shift     uint8
 }
 
-func NewSharedWriterBarrier(written *Cursor, capacity uint64) *SharedWriterBarrier {
+func NewSharedWriterBarrier(written *Cursor, capacity int64) *SharedWriterBarrier {
 	assertPowerOfTwo(capacity)
 
 	return &SharedWriterBarrier{
@@ -45,20 +45,21 @@ func NewSharedWriterBarrier(written *Cursor, capacity uint64) *SharedWriterBarri
 		shift:     uint8(math.Log2(float64(capacity))),
 	}
 }
-func prepareCommitBuffer(capacity uint64) []uint32 {
-	buffer := make([]uint32, capacity)
+
+func prepareCommitBuffer(capacity int64) []int32 {
+	buffer := make([]int32, capacity)
 	for i := range buffer {
-		buffer[i] = uint32(InitialSequenceValue)
+		buffer[i] = int32(InitialSequenceValue)
 	}
 	return buffer
 }
 
-func (b *SharedWriterBarrier) Read(lower uint64) uint64 {
+func (b *SharedWriterBarrier) Read(lower int64) int64 {
 	shift, mask := b.shift, b.mask
 	upper := b.written.Load()
 
 	for ; lower <= upper; lower++ {
-		if b.committed[lower&mask] != uint32(lower>>shift) {
+		if b.committed[lower&mask] != int32(lower>>shift) {
 			return lower - 1
 		}
 	}
